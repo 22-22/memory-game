@@ -1,0 +1,11 @@
+.play-again-btn {
+    width: 50%;
+    margin: 10px auto;
+    padding: 5px 10px;
+    background-color: #fd3716;
+    outline: 0;
+    border: 0;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}

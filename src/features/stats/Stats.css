@@ -1,8 +1,12 @@
 .stats-container {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    margin: 5px 0 0 0;
+    margin: 5px 0 10px 0;
+}
+
+.stats-data:first-child {
+    margin: 0 10px 0 0;
 }
 
 .stats-data {

@@ -1,8 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { originalCardsArray } from "../../constants";
+import React, { useCallback, useEffect, useRef } from 'react';
 import { CardType } from "../../types";
-import { useAppDispatch } from "../../app/hooks";
-import { countTries, countMatchingPairs } from "./boardSlice";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import {
+    createCardsArray,
+    selectCards,
+    selectGuessingCards,
+    addGuessingCards,
+    clearGuessingCards,
+    addMatchingCards,
+    selectMatchingCards,
+    selectIsStarted,
+    setGameStart,
+    setGameEnd
+} from "./boardSlice";
+import { countTries } from "../stats/statsSlice";
 import { Card } from "../card/Card";
 // @ts-ignore 
 import winSoundSrc from '../../assets/sounds/win.wav';
@@ -10,50 +21,59 @@ import './Board.css';
 
 export function Board() {
     const dispatch = useAppDispatch();
-
-    const [cards, setCards] = useState<CardType[]>([]);
-    const [guessingCards, setGuessingCards] = useState<CardType[]>([]);
-    const [matchingCards, setMatchingCards] = useState<CardType[]>([]);
-
+    const cards = useAppSelector(selectCards);
+    const guessingCards = useAppSelector(selectGuessingCards);
+    const matchingCards = useAppSelector(selectMatchingCards);
+    const isStarted = useAppSelector(selectIsStarted);
     const winSoundRef = useRef<HTMLAudioElement>(null);
 
     useEffect(() => {
-        const copy = [...originalCardsArray];
-        copy.sort(() => Math.random() - 0.5);
-        setCards(copy);
-    }, []);
+        dispatch(createCardsArray());
+    }, [dispatch]);
 
-    useEffect(() => {
+    const evaluateMove = useCallback(() => {
         if (guessingCards.length === 2) {
             dispatch(countTries());
             if (guessingCards[0].content === guessingCards[1].content) {
-                setMatchingCards([...matchingCards, ...guessingCards]);
-                dispatch(countMatchingPairs())
-                setGuessingCards([]);
+                dispatch(addMatchingCards());
+                dispatch(clearGuessingCards());
                 winSoundRef.current?.play();
             } else {
                 setTimeout(() => {
-                    setGuessingCards([]);
-                }, 1000)
+                    dispatch(clearGuessingCards());
+                }, 1000);
             }
         }
-    }, [guessingCards, matchingCards, dispatch]);
+    }, [guessingCards, dispatch]);
 
-    const checkIfMatching = (id: number) => {
+    useEffect(() => {
+        evaluateMove();
+    }, [evaluateMove]);
+
+    useEffect(() => {
+        if (matchingCards.length === cards.length) {
+            dispatch(setGameEnd());
+        }
+    }, [matchingCards]);
+
+    const checkIfMatching = useCallback((id: number) => {
         const matchingIds = matchingCards.map((card) => card.id);
         return matchingIds.includes(id);
-    };
+    }, [matchingCards]);
 
-    const checkIfGuessing = (id: number) => {
+    const checkIfGuessing = useCallback((id: number) => {
         const guessingIds = guessingCards.map((card) => card.id);
         return guessingIds.includes(id);
-    };
+    }, [guessingCards]);
 
-    const handleCardClick = (card: CardType) => {
+    const handleCardClick = useCallback((card: CardType) => {
+        if (!isStarted) {
+            dispatch(setGameStart());
+        }
         if (guessingCards.length < 2 && !checkIfMatching(card.id)) {
-            setGuessingCards([...guessingCards, card]);
+            dispatch(addGuessingCards(card));
         };
-    };
+    }, [guessingCards, checkIfMatching, dispatch]);
 
     return (
         <>

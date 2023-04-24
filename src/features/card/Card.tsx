@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { CardType } from "../../types";
 import { useAppDispatch } from "../../app/hooks";
 import { countImagesLoaded } from "../board/boardSlice";
@@ -13,13 +13,14 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ card, isOpen, handleCardClick }) => {
     const dispatch = useAppDispatch();
-    const onClick = () => {
-        handleCardClick(card);
-    };
 
-    const handleImageLoad = () => {
+    const onClick = useCallback(() => {
+        handleCardClick(card);
+    }, [handleCardClick, card]);
+
+    const handleImageLoad = useCallback(() => {
         dispatch(countImagesLoaded());
-    };
+    }, [dispatch]);
     return (
         <div className="flip-card" onClick={onClick}>
             <div className={isOpen ? 'flip-card-inner flip-class' : 'flip-card-inner'}>
